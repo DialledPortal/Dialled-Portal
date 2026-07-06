@@ -60,6 +60,7 @@ def load_data():
         data = {}
     data.setdefault("weeks", [])
     data.setdefault("ab_tests", [])
+    data.setdefault("landing_pages", [])
     return data
 
 def save_data(data):
@@ -165,6 +166,25 @@ def get_abandoned_cart_stats(days=7):
         return {"abandoned": 0, "orders": 0, "rate": 0, "error": str(e)}
 
 # ---------- Routes ----------
+def build_notifications(data, abandoned):
+    notifications = []
+    if abandoned.get("rate", 0) > 70:
+        notifications.append({"type": "bad", "text": f"Abandoned cart rate is {abandoned['rate']}% this week"})
+    elif abandoned.get("rate", 0) > 50:
+        notifications.append({"type": "warn", "text": f"Abandoned cart rate is {abandoned['rate']}% this week"})
+    if data["weeks"]:
+        latest = data["weeks"][-1]
+        if latest.get("roas", 0) < BREAKEVEN_ROAS:
+            notifications.append({"type": "bad", "text": f"Latest week ROAS ({latest['roas']}) is below breakeven ({BREAKEVEN_ROAS})"})
+        elif latest.get("roas", 0) < TARGET_ROAS:
+            notifications.append({"type": "warn", "text": f"Latest week ROAS ({latest['roas']}) is below target ({TARGET_ROAS})"})
+        if latest.get("cpp", 0) > TARGET_CPP:
+            notifications.append({"type": "warn", "text": f"Latest CPP (${latest['cpp']}) is above target (${TARGET_CPP})"})
+    for lp in data["landing_pages"]:
+        if lp.get("views", 0) > 100 and lp.get("conversion", 0) < 1:
+            notifications.append({"type": "bad", "text": f"{lp.get('page_name')} conversion is {lp['conversion']}% (low)"})
+    return notifications
+
 @app.route("/")
 def index():
     data = load_data()
@@ -172,13 +192,16 @@ def index():
     shopify_30 = get_shopify_stats(30)
     abandoned = get_abandoned_cart_stats(7)
     revenue_data = get_revenue_series(90)
+    notifications = build_notifications(data, abandoned)
     return render_template("dashboard.html",
         weeks=data["weeks"],
         ab_tests=data["ab_tests"],
+        landing_pages=data["landing_pages"],
         shopify=shopify,
         shopify_30=shopify_30,
         abandoned=abandoned,
         revenue_data=revenue_data,
+        notifications=notifications,
         settings={
             "gross_margin": GROSS_MARGIN,
             "cogs": COGS,
@@ -225,6 +248,29 @@ def add_ab_test():
 def delete_ab_test(test_id):
     data = load_data()
     data["ab_tests"] = [t for t in data["ab_tests"] if t.get("id") != test_id]
+    save_data(data)
+    return jsonify({"ok": True})
+
+@app.route("/add_landing_page", methods=["POST"])
+def add_landing_page():
+    data = load_data()
+    lp = request.json
+    views = float(lp.get("views", 0)) or 0
+    atc = float(lp.get("atc", 0)) or 0
+    orders = float(lp.get("orders", 0)) or 0
+    revenue = float(lp.get("revenue", 0)) or 0
+    lp["atc_rate"] = round(atc / views * 100, 1) if views else 0
+    lp["conversion"] = round(orders / views * 100, 1) if views else 0
+    lp["aov"] = round(revenue / orders, 2) if orders else 0
+    lp["id"] = datetime.now().isoformat()
+    data["landing_pages"].append(lp)
+    save_data(data)
+    return jsonify({"ok": True})
+
+@app.route("/delete_landing_page/<lp_id>", methods=["DELETE"])
+def delete_landing_page(lp_id):
+    data = load_data()
+    data["landing_pages"] = [l for l in data["landing_pages"] if l.get("id") != lp_id]
     save_data(data)
     return jsonify({"ok": True})
 

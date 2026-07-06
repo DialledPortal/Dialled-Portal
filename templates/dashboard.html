@@ -9,9 +9,30 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { background: #0f0f0f; color: #f0f0f0; font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif; min-height: 100vh; }
 
-  .topbar { background: #1a1a1a; border-bottom: 2px solid #c8102e; padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; }
+  .topbar { background: #1a1a1a; border-bottom: 2px solid #c8102e; padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; position: relative; }
+  .topbar-left { display: flex; align-items: center; gap: 16px; }
   .topbar h1 { font-size: 22px; font-weight: 800; letter-spacing: 3px; color: #fff; }
-  .topbar span { font-size: 12px; color: #666; letter-spacing: 1px; }
+  .topbar span.tag { font-size: 12px; color: #666; letter-spacing: 1px; }
+
+  .nav-toggle { background: none; border: 1px solid #333; border-radius: 6px; color: #fff; font-size: 18px; padding: 6px 11px; cursor: pointer; line-height: 1; }
+  .nav-toggle:hover { border-color: #c8102e; }
+  .nav-dropdown { position: absolute; top: 62px; left: 32px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; padding: 6px; min-width: 200px; z-index: 100; display: none; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+  .nav-dropdown.open { display: block; }
+  .nav-item { padding: 10px 14px; font-size: 13px; letter-spacing: 0.5px; color: #ccc; cursor: pointer; border-radius: 6px; }
+  .nav-item:hover { background: #252525; color: #fff; }
+  .nav-item.active { color: #c8102e; font-weight: 700; }
+
+  .topbar-right { display: flex; align-items: center; gap: 18px; }
+  .notif-btn { position: relative; background: none; border: 1px solid #333; border-radius: 6px; color: #fff; font-size: 16px; padding: 6px 10px; cursor: pointer; line-height: 1; }
+  .notif-btn:hover { border-color: #c8102e; }
+  .notif-badge { position: absolute; top: -6px; right: -6px; background: #c8102e; color: #fff; font-size: 10px; font-weight: 700; border-radius: 50%; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; }
+  .notif-dropdown { position: absolute; top: 62px; right: 32px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; padding: 6px; min-width: 260px; max-width: 320px; z-index: 100; display: none; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+  .notif-dropdown.open { display: block; }
+  .notif-item { padding: 10px 12px; font-size: 12px; line-height: 1.4; color: #ccc; border-radius: 6px; border-left: 3px solid #444; margin-bottom: 4px; }
+  .notif-item:last-child { margin-bottom: 0; }
+  .notif-item.warn { border-left-color: #f59e0b; }
+  .notif-item.bad { border-left-color: #c8102e; }
+  .notif-empty { padding: 16px 12px; font-size: 12px; color: #555; text-align: center; }
 
   .container { max-width: 1300px; margin: 0 auto; padding: 32px 24px; }
 
@@ -82,6 +103,7 @@
   .revenue-total { text-align: right; }
   .revenue-amount { font-size: 26px; font-weight: 700; color: #22c55e; }
   .revenue-meta { font-size: 11px; color: #555; margin-top: 2px; }
+  .chart-wrap { position: relative; height: 180px; }
 
   .pill { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
   .pill.a { background: #1e3a5f; color: #7db8f0; }
@@ -106,11 +128,35 @@
 <body>
 
 <div class="topbar">
-  <h1>DIALLED</h1>
-  <span>GROWTH PORTAL</span>
+  <div class="topbar-left">
+    <button class="nav-toggle" onclick="toggleNavMenu()">&#9776;</button>
+    <h1>DIALLED</h1>
+    <div class="nav-dropdown" id="navDropdown">
+      <div class="nav-item active" id="nav-overview" onclick="showView('overview')">Growth Overview</div>
+      <div class="nav-item" id="nav-landingpages" onclick="showView('landingpages')">Landing Pages</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <span class="tag">GROWTH PORTAL</span>
+    <button class="notif-btn" onclick="toggleNotifMenu()">
+      &#128276;
+      {% if notifications %}<span class="notif-badge">{{ notifications|length }}</span>{% endif %}
+    </button>
+    <div class="notif-dropdown" id="notifDropdown">
+      {% if notifications %}
+        {% for n in notifications %}
+        <div class="notif-item {{ n.type }}">{{ n.text }}</div>
+        {% endfor %}
+      {% else %}
+        <div class="notif-empty">No alerts — all metrics on track.</div>
+      {% endif %}
+    </div>
+  </div>
 </div>
 
 <div class="container">
+
+<div class="view-overview">
 
   <!-- Live Shopify -->
   <div class="section-head" style="margin-top:0">
@@ -152,7 +198,7 @@
         <div class="revenue-meta">last 90 days · {{ revenue_data.total_orders }} orders · ${{ "%.0f"|format(revenue_data.aov) }} AOV</div>
       </div>
     </div>
-    <canvas id="revenueChart" height="220"></canvas>
+    <div class="chart-wrap"><canvas id="revenueChart"></canvas></div>
   </div>
 
   <!-- Cumulative summary -->
@@ -296,8 +342,106 @@
     <button class="btn-submit" onclick="addWeek()">ADD WEEK</button>
   </div>
 
+</div>
+
+<div class="view-landingpages" style="display:none">
+
+  <!-- Landing Pages -->
+  <div class="section-head" style="margin-top:0">
+    <h2>Landing Pages</h2>
+    <div class="red-line"></div>
+  </div>
+
+  <div class="table-wrap">
+    {% if landing_pages %}
+    <table>
+      <thead>
+        <tr>
+          <th>Landing Page</th>
+          <th>Market</th>
+          <th>Date Range</th>
+          <th>Views</th>
+          <th>ATC</th>
+          <th>ATC %</th>
+          <th>Orders</th>
+          <th>Conversion</th>
+          <th>Revenue</th>
+          <th>AOV</th>
+          <th>Notes</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for l in landing_pages|reverse %}
+        <tr>
+          <td>{{ l.page_name }}</td>
+          <td>{{ l.market }}</td>
+          <td>{{ l.date_range }}</td>
+          <td>{{ l.views }}</td>
+          <td>{{ l.atc }}</td>
+          <td>{{ l.atc_rate }}%</td>
+          <td>{{ l.orders }}</td>
+          <td class="{% if l.conversion >= 3 %}good{% elif l.conversion >= 1 %}warn{% else %}bad{% endif %}">{{ l.conversion }}%</td>
+          <td>${{ "%.0f"|format(l.revenue|float) }}</td>
+          <td>${{ "%.0f"|format(l.aov) }}</td>
+          <td style="text-align:left;color:#555;font-size:12px;max-width:180px">{{ l.notes }}</td>
+          <td class="delete-btn" onclick="deleteLandingPage('{{ l.id }}')">×</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">No landing pages logged yet — add your first below.</div>
+    {% endif %}
+  </div>
+
+  <div class="form-card">
+    <h3>Log a Landing Page</h3>
+    <div class="form-scroll">
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Landing Page</label>
+        <input type="text" id="lp_page_name" placeholder="tank-pdp" />
+      </div>
+      <div class="form-group">
+        <label>Market</label>
+        <input type="text" id="lp_market" placeholder="AU" />
+      </div>
+      <div class="form-group">
+        <label>Date Range</label>
+        <input type="text" id="lp_date_range" placeholder="Jul 5 – Jul 12" />
+      </div>
+      <div class="form-group">
+        <label>Views</label>
+        <input type="number" id="lp_views" placeholder="1200" />
+      </div>
+      <div class="form-group">
+        <label>Add to Cart</label>
+        <input type="number" id="lp_atc" placeholder="90" />
+      </div>
+      <div class="form-group">
+        <label>Orders</label>
+        <input type="number" id="lp_orders" placeholder="18" />
+      </div>
+      <div class="form-group">
+        <label>Revenue (AUD)</label>
+        <input type="number" id="lp_revenue" placeholder="1079" />
+      </div>
+      <div class="form-group" style="grid-column: span 2">
+        <label>Notes</label>
+        <input type="text" id="lp_notes" placeholder="e.g. UGC tank creative driving most of this traffic" />
+      </div>
+    </div>
+    </div>
+    <button class="btn-submit" onclick="addLandingPage()">ADD LANDING PAGE</button>
+  </div>
+
+</div>
+
+<div class="view-overview">
+
   <!-- A/B Testing -->
-  <div class="section-head">
+  <div class="section-head" style="margin-top:0">
     <h2>A/B Testing</h2>
     <div class="red-line"></div>
   </div>
@@ -410,6 +554,7 @@ new Chart(document.getElementById('revenueChart'), {
   },
   options: {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: { display: false },
       tooltip: {
@@ -424,6 +569,26 @@ new Chart(document.getElementById('revenueChart'), {
       y: { ticks: { color: '#555' }, grid: { color: '#1f1f1f' }, beginAtZero: true }
     }
   }
+});
+
+function toggleNavMenu() {
+  document.getElementById('navDropdown').classList.toggle('open');
+  document.getElementById('notifDropdown').classList.remove('open');
+}
+function showView(view) {
+  document.querySelectorAll('.view-overview').forEach(el => el.style.display = view === 'overview' ? '' : 'none');
+  document.querySelectorAll('.view-landingpages').forEach(el => el.style.display = view === 'landingpages' ? '' : 'none');
+  document.getElementById('nav-overview').classList.toggle('active', view === 'overview');
+  document.getElementById('nav-landingpages').classList.toggle('active', view === 'landingpages');
+  document.getElementById('navDropdown').classList.remove('open');
+}
+function toggleNotifMenu() {
+  document.getElementById('notifDropdown').classList.toggle('open');
+  document.getElementById('navDropdown').classList.remove('open');
+}
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.topbar-left')) document.getElementById('navDropdown').classList.remove('open');
+  if (!e.target.closest('.topbar-right')) document.getElementById('notifDropdown').classList.remove('open');
 });
 
 async function addWeek() {
@@ -449,6 +614,31 @@ async function addWeek() {
 async function deleteWeek(id) {
   if (!confirm("Delete this week?")) return;
   await fetch("/delete_week/" + id, {method: "DELETE"});
+  location.reload();
+}
+
+async function addLandingPage() {
+  const data = {
+    page_name: document.getElementById("lp_page_name").value || "Landing Page",
+    market: document.getElementById("lp_market").value,
+    date_range: document.getElementById("lp_date_range").value,
+    views: parseFloat(document.getElementById("lp_views").value) || 0,
+    atc: parseFloat(document.getElementById("lp_atc").value) || 0,
+    orders: parseFloat(document.getElementById("lp_orders").value) || 0,
+    revenue: parseFloat(document.getElementById("lp_revenue").value) || 0,
+    notes: document.getElementById("lp_notes").value,
+  };
+  await fetch("/add_landing_page", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(data)
+  });
+  location.reload();
+}
+
+async function deleteLandingPage(id) {
+  if (!confirm("Delete this landing page entry?")) return;
+  await fetch("/delete_landing_page/" + id, {method: "DELETE"});
   location.reload();
 }
 
@@ -478,6 +668,8 @@ async function deleteTest(id) {
   location.reload();
 }
 </script>
+
+</div>
 
 </body>
 </html>
