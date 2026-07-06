@@ -95,6 +95,59 @@ def get_shopify_stats(days=7):
     except Exception as e:
         return {"revenue": 0, "orders": 0, "aov": 0, "error": str(e)}
 
+def get_revenue_series(days=90):
+    since = (datetime.utcnow() - timedelta(days=days)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    daily = {}
+    total_revenue = 0.0
+    total_orders = 0
+    try:
+        url = f"https://{SHOPIFY_STORE}/admin/api/2025-01/graphql.json"
+        cursor = None
+        for _ in range(6):
+            after_clause = f', after: "{cursor}"' if cursor else ""
+            query = """
+            {
+              orders(first: 250, query: "created_at:>%s"%s) {
+                edges {
+                  cursor
+                  node {
+                    createdAt
+                    totalPriceSet { shopMoney { amount } }
+                    displayFinancialStatus
+                  }
+                }
+                pageInfo { hasNextPage }
+              }
+            }
+            """ % (since, after_clause)
+            r = requests.post(url,
+                headers={"X-Shopify-Access-Token": SHOPIFY_TOKEN, "Content-Type": "application/json"},
+                json={"query": query})
+            result = r.json().get("data", {}).get("orders", {})
+            edges = result.get("edges", [])
+            if not edges:
+                break
+            for e in edges:
+                node = e["node"]
+                if node["displayFinancialStatus"] not in ["PAID", "PARTIALLY_PAID", "PARTIALLY_REFUNDED"]:
+                    continue
+                day = node["createdAt"][:10]
+                amt = float(node["totalPriceSet"]["shopMoney"]["amount"])
+                daily[day] = daily.get(day, 0) + amt
+                total_revenue += amt
+                total_orders += 1
+            cursor = edges[-1]["cursor"]
+            if not result.get("pageInfo", {}).get("hasNextPage"):
+                break
+        series = []
+        for i in range(days, -1, -1):
+            d = (datetime.utcnow() - timedelta(days=i)).strftime("%Y-%m-%d")
+            series.append({"date": d, "revenue": round(daily.get(d, 0), 2)})
+        aov = total_revenue / total_orders if total_orders else 0
+        return {"series": series, "total_revenue": round(total_revenue, 2), "total_orders": total_orders, "aov": round(aov, 2)}
+    except Exception as e:
+        return {"series": [], "total_revenue": 0, "total_orders": 0, "aov": 0, "error": str(e)}
+
 def get_abandoned_cart_stats(days=7):
     since = (datetime.utcnow() - timedelta(days=days)).strftime("%Y-%m-%dT%H:%M:%SZ")
     try:
@@ -118,12 +171,14 @@ def index():
     shopify = get_shopify_stats(7)
     shopify_30 = get_shopify_stats(30)
     abandoned = get_abandoned_cart_stats(7)
+    revenue_data = get_revenue_series(90)
     return render_template("dashboard.html",
         weeks=data["weeks"],
         ab_tests=data["ab_tests"],
         shopify=shopify,
         shopify_30=shopify_30,
         abandoned=abandoned,
+        revenue_data=revenue_data,
         settings={
             "gross_margin": GROSS_MARGIN,
             "cogs": COGS,

@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dialled — Portal</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { background: #0f0f0f; color: #f0f0f0; font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif; min-height: 100vh; }
@@ -72,6 +73,15 @@
 
   .empty-state { text-align: center; padding: 40px; color: #444; font-size: 13px; }
 
+  /* Revenue chart */
+  .revenue-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 24px; margin-bottom: 32px; }
+  .revenue-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; gap: 16px; flex-wrap: wrap; }
+  .revenue-title { font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+  .revenue-sub { font-size: 11px; color: #555; }
+  .revenue-total { text-align: right; }
+  .revenue-amount { font-size: 26px; font-weight: 700; color: #22c55e; }
+  .revenue-meta { font-size: 11px; color: #555; margin-top: 2px; }
+
   .pill { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
   .pill.a { background: #1e3a5f; color: #7db8f0; }
   .pill.b { background: #4a1e2e; color: #f0879e; }
@@ -90,6 +100,8 @@
     .form-group textarea { grid-column: span 1; }
     .topbar { padding: 14px 18px; }
     .bench-row { gap: 8px; }
+    .revenue-head { flex-direction: column; }
+    .revenue-total { text-align: left; }
   }
 </style>
 </head>
@@ -128,6 +140,21 @@
       <div class="value {% if abandoned.rate <= 60 %}green{% elif abandoned.rate <= 75 %}yellow{% else %}red{% endif %}">{{ abandoned.rate }}%</div>
       <div class="sub">{{ abandoned.abandoned }} abandoned / {{ abandoned.orders }} orders</div>
     </div>
+  </div>
+
+  <!-- Revenue chart -->
+  <div class="revenue-card">
+    <div class="revenue-head">
+      <div>
+        <div class="revenue-title">Revenue</div>
+        <div class="revenue-sub">Daily net · last 90 days · paid orders</div>
+      </div>
+      <div class="revenue-total">
+        <div class="revenue-amount">${{ "%.0f"|format(revenue_data.total_revenue) }}</div>
+        <div class="revenue-meta">last 90 days · {{ revenue_data.total_orders }} orders · ${{ "%.0f"|format(revenue_data.aov) }} AOV</div>
+      </div>
+    </div>
+    <canvas id="revenueChart" height="220"></canvas>
   </div>
 
   <!-- Cumulative summary -->
@@ -364,6 +391,39 @@
 </div>
 
 <script>
+const revenueSeries = {{ revenue_data.series|tojson }};
+new Chart(document.getElementById('revenueChart'), {
+  type: 'line',
+  data: {
+    labels: revenueSeries.map(p => p.date.slice(5)),
+    datasets: [{
+      data: revenueSeries.map(p => p.revenue),
+      borderColor: '#22c55e',
+      backgroundColor: 'rgba(34,197,94,0.08)',
+      fill: true,
+      tension: 0.3,
+      pointRadius: 0,
+      borderWidth: 2,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#111',
+        titleColor: '#888',
+        bodyColor: '#22c55e',
+        callbacks: { label: (ctx) => `net revenue: $${ctx.parsed.y.toLocaleString()}` }
+      }
+    },
+    scales: {
+      x: { ticks: { color: '#555', maxTicksLimit: 6 }, grid: { color: '#1f1f1f' } },
+      y: { ticks: { color: '#555' }, grid: { color: '#1f1f1f' }, beginAtZero: true }
+    }
+  }
+});
+
 async function addWeek() {
   const data = {
     week_label: document.getElementById("week_label").value || "Week",
