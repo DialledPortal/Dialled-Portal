@@ -81,6 +81,16 @@
     .live-strip { grid-template-columns: repeat(2, 1fr); }
     .form-grid { grid-template-columns: repeat(2, 1fr); }
   }
+
+  @media (max-width: 600px) {
+    .container { padding: 20px 16px; }
+    .summary-grid { grid-template-columns: 1fr; }
+    .live-strip { grid-template-columns: 1fr; }
+    .form-grid { grid-template-columns: 1fr; }
+    .form-group textarea { grid-column: span 1; }
+    .topbar { padding: 14px 18px; }
+    .bench-row { gap: 8px; }
+  }
 </style>
 </head>
 <body>
