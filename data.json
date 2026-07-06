@@ -1,0 +1,22 @@
+{
+  "weeks": [
+    {
+      "week_label": "WEEK 1 ADS DIALLED",
+      "date_range": "june 28 - july 5",
+      "ad_spend": 413,
+      "meta_revenue": 1125,
+      "purchases": 9,
+      "site_cvr": 2.6,
+      "ctr": 0.76,
+      "cpc": 0,
+      "notes": "running LSPT UGC, overy statics and tank stack bundle, feed outperforming reels/stories",
+      "gross_profit": 801.0,
+      "net_profit": 388.0,
+      "net_profit_per_order": 43.11,
+      "roas": 2.72,
+      "cpp": 45.89,
+      "aov": 125.0,
+      "id": "2026-07-05T19:29:56.983771"
+    }
+  ]
+}

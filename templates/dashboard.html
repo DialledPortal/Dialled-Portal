@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dialled — Portal</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0f0f0f; color: #f0f0f0; font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif; min-height: 100vh; }
+
+  .topbar { background: #1a1a1a; border-bottom: 2px solid #c8102e; padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; }
+  .topbar h1 { font-size: 22px; font-weight: 800; letter-spacing: 3px; color: #fff; }
+  .topbar span { font-size: 12px; color: #666; letter-spacing: 1px; }
+
+  .container { max-width: 1300px; margin: 0 auto; padding: 32px 24px; }
+
+  /* Live Shopify strip */
+  .live-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+  .live-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 20px 24px; }
+  .live-card .label { font-size: 10px; letter-spacing: 2px; color: #666; text-transform: uppercase; margin-bottom: 8px; }
+  .live-card .value { font-size: 28px; font-weight: 700; color: #fff; }
+  .live-card .sub { font-size: 11px; color: #444; margin-top: 4px; }
+  .live-badge { display: inline-block; background: #c8102e; color: #fff; font-size: 9px; letter-spacing: 1px; padding: 2px 8px; border-radius: 20px; margin-left: 8px; vertical-align: middle; }
+
+  /* Section headers */
+  .section-head { display: flex; align-items: center; justify-content: space-between; margin: 32px 0 16px; }
+  .section-head h2 { font-size: 13px; letter-spacing: 3px; text-transform: uppercase; color: #888; }
+  .red-line { flex: 1; height: 1px; background: #c8102e; margin-left: 16px; opacity: 0.3; }
+
+  /* Summary cards */
+  .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+  .sum-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 20px; }
+  .sum-card .label { font-size: 10px; letter-spacing: 1.5px; color: #555; text-transform: uppercase; margin-bottom: 8px; }
+  .sum-card .value { font-size: 24px; font-weight: 700; }
+  .sum-card .value.green { color: #22c55e; }
+  .sum-card .value.red { color: #c8102e; }
+  .sum-card .value.white { color: #fff; }
+  .sum-card .value.yellow { color: #f59e0b; }
+
+  /* Weekly table */
+  .table-wrap { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; overflow: hidden; margin-bottom: 32px; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th { background: #111; color: #555; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; padding: 12px 16px; text-align: right; border-bottom: 1px solid #2a2a2a; white-space: nowrap; }
+  thead th:first-child { text-align: left; }
+  tbody tr { border-bottom: 1px solid #1f1f1f; transition: background 0.15s; }
+  tbody tr:hover { background: #222; }
+  tbody tr:last-child { border-bottom: none; }
+  td { padding: 14px 16px; text-align: right; color: #ccc; white-space: nowrap; }
+  td:first-child { text-align: left; color: #fff; font-weight: 600; }
+  td.good { color: #22c55e; }
+  td.warn { color: #f59e0b; }
+  td.bad { color: #c8102e; }
+  td.delete-btn { cursor: pointer; color: #333; font-size: 16px; }
+  td.delete-btn:hover { color: #c8102e; }
+
+  /* Add week form */
+  .form-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 28px; }
+  .form-card h3 { font-size: 13px; letter-spacing: 2px; text-transform: uppercase; color: #888; margin-bottom: 24px; }
+  .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #555; }
+  .form-group input, .form-group textarea, .form-group select { background: #111; border: 1px solid #333; border-radius: 6px; padding: 10px 12px; color: #fff; font-size: 14px; outline: none; transition: border 0.2s; }
+  .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: #c8102e; }
+  .form-group textarea { resize: vertical; min-height: 60px; grid-column: span 3; }
+  .btn-submit { margin-top: 20px; background: #c8102e; color: #fff; border: none; padding: 12px 32px; border-radius: 6px; font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: background 0.2s; }
+  .btn-submit:hover { background: #a00d25; }
+
+  /* Benchmarks */
+  .bench-row { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+  .bench { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; padding: 12px 18px; font-size: 12px; color: #555; }
+  .bench span { color: #fff; font-weight: 700; margin-left: 6px; }
+
+  .empty-state { text-align: center; padding: 40px; color: #444; font-size: 13px; }
+
+  .pill { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+  .pill.a { background: #1e3a5f; color: #7db8f0; }
+  .pill.b { background: #4a1e2e; color: #f0879e; }
+
+  @media (max-width: 900px) {
+    .summary-grid { grid-template-columns: repeat(2, 1fr); }
+    .live-strip { grid-template-columns: repeat(2, 1fr); }
+    .form-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>DIALLED</h1>
+  <span>GROWTH PORTAL</span>
+</div>
+
+<div class="container">
+
+  <!-- Live Shopify -->
+  <div class="section-head" style="margin-top:0">
+    <h2>Live Store — Last 7 Days <span class="live-badge">LIVE</span></h2>
+    <div class="red-line"></div>
+  </div>
+  <div class="live-strip">
+    <div class="live-card">
+      <div class="label">Revenue</div>
+      <div class="value">${{ "%.0f"|format(shopify.revenue) }} AUD</div>
+      <div class="sub">Shopify paid orders</div>
+    </div>
+    <div class="live-card">
+      <div class="label">Orders</div>
+      <div class="value">{{ shopify.orders }}</div>
+      <div class="sub">Last 7 days</div>
+    </div>
+    <div class="live-card">
+      <div class="label">AOV</div>
+      <div class="value">${{ "%.0f"|format(shopify.aov) }} AUD</div>
+      <div class="sub">Average order value</div>
+    </div>
+    <div class="live-card">
+      <div class="label">Abandoned Cart Rate</div>
+      <div class="value {% if abandoned.rate <= 60 %}green{% elif abandoned.rate <= 75 %}yellow{% else %}red{% endif %}">{{ abandoned.rate }}%</div>
+      <div class="sub">{{ abandoned.abandoned }} abandoned / {{ abandoned.orders }} orders</div>
+    </div>
+  </div>
+
+  <!-- Cumulative summary -->
+  {% set total_spend = weeks|sum(attribute='ad_spend')|float %}
+  {% set total_revenue = weeks|sum(attribute='meta_revenue')|float %}
+  {% set total_net = weeks|sum(attribute='net_profit')|float %}
+  {% set total_purchases = weeks|sum(attribute='purchases')|float %}
+  {% set overall_roas = (total_revenue / total_spend) if total_spend > 0 else 0 %}
+
+  <div class="section-head">
+    <h2>All-Time Totals</h2>
+    <div class="red-line"></div>
+  </div>
+  <div class="summary-grid">
+    <div class="sum-card">
+      <div class="label">Total Ad Spend</div>
+      <div class="value white">${{ "%.0f"|format(total_spend) }}</div>
+    </div>
+    <div class="sum-card">
+      <div class="label">Total Revenue</div>
+      <div class="value white">${{ "%.0f"|format(total_revenue) }}</div>
+    </div>
+    <div class="sum-card">
+      <div class="label">Overall ROAS</div>
+      <div class="value {% if overall_roas >= settings.target_roas %}green{% elif overall_roas >= settings.breakeven_roas %}yellow{% else %}red{% endif %}">{{ "%.2f"|format(overall_roas) }}x</div>
+    </div>
+    <div class="sum-card">
+      <div class="label">Total Net Profit</div>
+      <div class="value {% if total_net > 0 %}green{% else %}red{% endif %}">${{ "%.0f"|format(total_net) }}</div>
+    </div>
+  </div>
+
+  <!-- Benchmarks -->
+  <div class="bench-row">
+    <div class="bench">Break-even ROAS<span>{{ "%.2f"|format(settings.breakeven_roas) }}x</span></div>
+    <div class="bench">Target ROAS<span>{{ "%.2f"|format(settings.target_roas) }}x+</span></div>
+    <div class="bench">Max CPP<span>$80</span></div>
+    <div class="bench">Gross Margin<span>71.2%</span></div>
+    <div class="bench">Landed COGS<span>$22.58</span></div>
+    <div class="bench">Outbound Shipping<span>$10.90</span></div>
+  </div>
+
+  <!-- Weekly table -->
+  <div class="section-head">
+    <h2>Weekly Breakdown</h2>
+    <div class="red-line"></div>
+  </div>
+
+  <div class="table-wrap">
+    {% if weeks %}
+    <table>
+      <thead>
+        <tr>
+          <th>Week</th>
+          <th>Spend</th>
+          <th>Revenue</th>
+          <th>ROAS</th>
+          <th>Purchases</th>
+          <th>CPP</th>
+          <th>AOV</th>
+          <th>Gross Profit</th>
+          <th>Net Profit</th>
+          <th>Net / Order</th>
+          <th>CVR %</th>
+          <th>ATC %</th>
+          <th>CTR %</th>
+          <th>Notes</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for w in weeks|reverse %}
+        <tr>
+          <td>{{ w.week_label }}<br><small style="color:#444;font-weight:400">{{ w.date_range }}</small></td>
+          <td>${{ "%.0f"|format(w.ad_spend|float) }}</td>
+          <td>${{ "%.0f"|format(w.meta_revenue|float) }}</td>
+          <td class="{% if w.roas >= settings.target_roas %}good{% elif w.roas >= settings.breakeven_roas %}warn{% else %}bad{% endif %}">{{ "%.2f"|format(w.roas) }}x</td>
+          <td>{{ w.purchases }}</td>
+          <td class="{% if w.cpp <= 40 %}good{% elif w.cpp <= 80 %}warn{% else %}bad{% endif %}">${{ "%.0f"|format(w.cpp) }}</td>
+          <td>${{ "%.0f"|format(w.aov) }}</td>
+          <td class="good">${{ "%.0f"|format(w.gross_profit) }}</td>
+          <td class="{% if w.net_profit > 0 %}good{% else %}bad{% endif %}">${{ "%.0f"|format(w.net_profit) }}</td>
+          <td class="{% if w.net_profit_per_order > 0 %}good{% else %}bad{% endif %}">${{ "%.0f"|format(w.net_profit_per_order) }}</td>
+          <td class="{% if w.site_cvr|float >= 3 %}good{% elif w.site_cvr|float >= 1 %}warn{% else %}bad{% endif %}">{{ w.site_cvr }}%</td>
+          <td class="{% if (w.atc|default(0))|float >= 8 %}good{% elif (w.atc|default(0))|float >= 4 %}warn{% else %}bad{% endif %}">{{ w.atc|default('-') }}{% if w.atc is defined and w.atc %}%{% endif %}</td>
+          <td class="{% if (w.ctr|default(0))|float >= 2 %}good{% elif (w.ctr|default(0))|float >= 1 %}warn{% else %}bad{% endif %}">{{ w.ctr|default('-') }}{% if w.ctr is defined and w.ctr %}%{% endif %}</td>
+          <td style="text-align:left;color:#555;font-size:12px;max-width:180px">{{ w.notes }}</td>
+          <td class="delete-btn" onclick="deleteWeek('{{ w.id }}')">×</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">No weeks logged yet — add your first week below.</div>
+    {% endif %}
+  </div>
+
+  <!-- Add week form -->
+  <div class="form-card">
+    <h3>Log This Week</h3>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Week Label</label>
+        <input type="text" id="week_label" placeholder="Week 1" />
+      </div>
+      <div class="form-group">
+        <label>Date Range</label>
+        <input type="text" id="date_range" placeholder="Jul 5 – Jul 12" />
+      </div>
+      <div class="form-group">
+        <label>Ad Spend (AUD)</label>
+        <input type="number" id="ad_spend" placeholder="362" />
+      </div>
+      <div class="form-group">
+        <label>Meta Revenue (AUD)</label>
+        <input type="number" id="meta_revenue" placeholder="1125" />
+      </div>
+      <div class="form-group">
+        <label>Purchases</label>
+        <input type="number" id="purchases" placeholder="9" />
+      </div>
+      <div class="form-group">
+        <label>Site CVR %</label>
+        <input type="number" id="site_cvr" placeholder="2.6" step="0.1" />
+      </div>
+      <div class="form-group">
+        <label>Add to Cart Rate %</label>
+        <input type="number" id="atc" placeholder="6.5" step="0.1" />
+      </div>
+      <div class="form-group">
+        <label>CTR % (Link Click)</label>
+        <input type="number" id="ctr" placeholder="1.8" step="0.01" />
+      </div>
+      <div class="form-group" style="grid-column: span 3">
+        <label>Notes (creative, changes, observations)</label>
+        <textarea id="notes" placeholder="e.g. Running UGC bundle creative. Feed outperforming Stories. CPP dropped after excluding warm audiences."></textarea>
+      </div>
+    </div>
+    <button class="btn-submit" onclick="addWeek()">ADD WEEK</button>
+  </div>
+
+  <!-- A/B Testing -->
+  <div class="section-head">
+    <h2>A/B Testing</h2>
+    <div class="red-line"></div>
+  </div>
+
+  <div class="table-wrap">
+    {% if ab_tests %}
+    <table>
+      <thead>
+        <tr>
+          <th>Test</th>
+          <th>Date Range</th>
+          <th>Variant A</th>
+          <th>Variant B</th>
+          <th>Metric</th>
+          <th>Result A</th>
+          <th>Result B</th>
+          <th>Winner</th>
+          <th>Notes</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in ab_tests|reverse %}
+        <tr>
+          <td>{{ t.test_name }}</td>
+          <td>{{ t.date_range }}</td>
+          <td>{{ t.variant_a }}</td>
+          <td>{{ t.variant_b }}</td>
+          <td>{{ t.metric }}</td>
+          <td>{{ t.result_a }}</td>
+          <td>{{ t.result_b }}</td>
+          <td><span class="pill {% if t.winner == 'A' %}a{% else %}b{% endif %}">{{ t.winner }}</span></td>
+          <td style="text-align:left;color:#555;font-size:12px;max-width:180px">{{ t.notes }}</td>
+          <td class="delete-btn" onclick="deleteTest('{{ t.id }}')">×</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">No tests logged yet — add your first test below.</div>
+    {% endif %}
+  </div>
+
+  <div class="form-card">
+    <h3>Log an A/B Test</h3>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Test Name</label>
+        <input type="text" id="test_name" placeholder="Hook: UGC vs Static" />
+      </div>
+      <div class="form-group">
+        <label>Date Range</label>
+        <input type="text" id="test_date_range" placeholder="Jul 5 – Jul 12" />
+      </div>
+      <div class="form-group">
+        <label>Metric Tracked</label>
+        <input type="text" id="metric" placeholder="CTR / CVR / ROAS" />
+      </div>
+      <div class="form-group">
+        <label>Variant A</label>
+        <input type="text" id="variant_a" placeholder="UGC video" />
+      </div>
+      <div class="form-group">
+        <label>Result A</label>
+        <input type="text" id="result_a" placeholder="2.1% CTR" />
+      </div>
+      <div class="form-group"></div>
+      <div class="form-group">
+        <label>Variant B</label>
+        <input type="text" id="variant_b" placeholder="Static image" />
+      </div>
+      <div class="form-group">
+        <label>Result B</label>
+        <input type="text" id="result_b" placeholder="1.4% CTR" />
+      </div>
+      <div class="form-group">
+        <label>Winner</label>
+        <select id="winner">
+          <option value="A">A</option>
+          <option value="B">B</option>
+        </select>
+      </div>
+      <div class="form-group" style="grid-column: span 3">
+        <label>Notes</label>
+        <textarea id="test_notes" placeholder="e.g. UGC won on hook rate but static won on CVR."></textarea>
+      </div>
+    </div>
+    <button class="btn-submit" onclick="addTest()">ADD TEST</button>
+  </div>
+
+</div>
+
+<script>
+async function addWeek() {
+  const data = {
+    week_label: document.getElementById("week_label").value || "Week",
+    date_range: document.getElementById("date_range").value,
+    ad_spend: parseFloat(document.getElementById("ad_spend").value) || 0,
+    meta_revenue: parseFloat(document.getElementById("meta_revenue").value) || 0,
+    purchases: parseFloat(document.getElementById("purchases").value) || 0,
+    site_cvr: parseFloat(document.getElementById("site_cvr").value) || 0,
+    atc: parseFloat(document.getElementById("atc").value) || 0,
+    ctr: parseFloat(document.getElementById("ctr").value) || 0,
+    notes: document.getElementById("notes").value,
+  };
+  await fetch("/add_week", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(data)
+  });
+  location.reload();
+}
+
+async function deleteWeek(id) {
+  if (!confirm("Delete this week?")) return;
+  await fetch("/delete_week/" + id, {method: "DELETE"});
+  location.reload();
+}
+
+async function addTest() {
+  const data = {
+    test_name: document.getElementById("test_name").value || "Test",
+    date_range: document.getElementById("test_date_range").value,
+    metric: document.getElementById("metric").value,
+    variant_a: document.getElementById("variant_a").value,
+    result_a: document.getElementById("result_a").value,
+    variant_b: document.getElementById("variant_b").value,
+    result_b: document.getElementById("result_b").value,
+    winner: document.getElementById("winner").value,
+    notes: document.getElementById("test_notes").value,
+  };
+  await fetch("/add_ab_test", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(data)
+  });
+  location.reload();
+}
+
+async function deleteTest(id) {
+  if (!confirm("Delete this test?")) return;
+  await fetch("/delete_ab_test/" + id, {method: "DELETE"});
+  location.reload();
+}
+</script>
+
+</body>
+</html>
