@@ -57,7 +57,8 @@
   /* Add week form */
   .form-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 28px; }
   .form-card h3 { font-size: 13px; letter-spacing: 2px; text-transform: uppercase; color: #888; margin-bottom: 24px; }
-  .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .form-scroll { overflow-x: auto; }
+  .form-grid { display: grid; grid-template-columns: repeat(3, minmax(200px, 1fr)); gap: 16px; min-width: 720px; }
   .form-group { display: flex; flex-direction: column; gap: 6px; }
   .form-group label { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #555; }
   .form-group input, .form-group textarea, .form-group select { background: #111; border: 1px solid #333; border-radius: 6px; padding: 10px 12px; color: #fff; font-size: 14px; outline: none; transition: border 0.2s; }
@@ -89,15 +90,12 @@
   @media (max-width: 900px) {
     .summary-grid { grid-template-columns: repeat(2, 1fr); }
     .live-strip { grid-template-columns: repeat(2, 1fr); }
-    .form-grid { grid-template-columns: repeat(2, 1fr); }
   }
 
   @media (max-width: 600px) {
     .container { padding: 20px 16px; }
     .summary-grid { grid-template-columns: 1fr; }
     .live-strip { grid-template-columns: 1fr; }
-    .form-grid { grid-template-columns: 1fr; }
-    .form-group textarea { grid-column: span 1; }
     .topbar { padding: 14px 18px; }
     .bench-row { gap: 8px; }
     .revenue-head { flex-direction: column; }
@@ -255,6 +253,7 @@
   <!-- Add week form -->
   <div class="form-card">
     <h3>Log This Week</h3>
+    <div class="form-scroll">
     <div class="form-grid">
       <div class="form-group">
         <label>Week Label</label>
@@ -292,6 +291,7 @@
         <label>Notes (creative, changes, observations)</label>
         <textarea id="notes" placeholder="e.g. Running UGC bundle creative. Feed outperforming Stories. CPP dropped after excluding warm audiences."></textarea>
       </div>
+    </div>
     </div>
     <button class="btn-submit" onclick="addWeek()">ADD WEEK</button>
   </div>
@@ -343,6 +343,7 @@
 
   <div class="form-card">
     <h3>Log an A/B Test</h3>
+    <div class="form-scroll">
     <div class="form-grid">
       <div class="form-group">
         <label>Test Name</label>
@@ -384,6 +385,7 @@
         <label>Notes</label>
         <textarea id="test_notes" placeholder="e.g. UGC won on hook rate but static won on CVR."></textarea>
       </div>
+    </div>
     </div>
     <button class="btn-submit" onclick="addTest()">ADD TEST</button>
   </div>
