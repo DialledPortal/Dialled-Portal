@@ -37,12 +37,19 @@
   .container { max-width: 1300px; margin: 0 auto; padding: 32px 24px; }
 
   /* Live Shopify strip */
-  .live-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+  .live-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; }
   .live-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 20px 24px; }
   .live-card .label { font-size: 10px; letter-spacing: 2px; color: #666; text-transform: uppercase; margin-bottom: 8px; }
   .live-card .value { font-size: 28px; font-weight: 700; color: #fff; }
   .live-card .sub { font-size: 11px; color: #444; margin-top: 4px; }
   .live-badge { display: inline-block; background: #c8102e; color: #fff; font-size: 9px; letter-spacing: 1px; padding: 2px 8px; border-radius: 20px; margin-left: 8px; vertical-align: middle; }
+
+  .mini-stat-row { display: flex; gap: 10px; margin-bottom: 32px; flex-wrap: wrap; }
+  .mini-stat { display: flex; align-items: center; gap: 8px; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; padding: 8px 14px; font-size: 11px; color: #666; }
+  .mini-stat .mini-value { font-size: 13px; font-weight: 700; }
+  .mini-stat .mini-value.green { color: #22c55e; }
+  .mini-stat .mini-value.yellow { color: #f59e0b; }
+  .mini-stat .mini-value.red { color: #c8102e; }
 
   /* Section headers */
   .section-head { display: flex; align-items: center; justify-content: space-between; margin: 32px 0 16px; }
@@ -179,10 +186,12 @@
       <div class="value">${{ "%.0f"|format(shopify.aov) }} AUD</div>
       <div class="sub">Average order value</div>
     </div>
-    <div class="live-card">
-      <div class="label">Abandoned Cart Rate</div>
-      <div class="value {% if abandoned.rate <= 60 %}green{% elif abandoned.rate <= 75 %}yellow{% else %}red{% endif %}">{{ abandoned.rate }}%</div>
-      <div class="sub">{{ abandoned.abandoned }} abandoned / {{ abandoned.orders }} orders</div>
+  </div>
+
+  <div class="mini-stat-row">
+    <div class="mini-stat">
+      <span>Abandoned Cart Rate</span>
+      <span class="mini-value {% if abandoned.rate <= 60 %}green{% elif abandoned.rate <= 75 %}yellow{% else %}red{% endif %}">{{ abandoned.rate }}%</span>
     </div>
   </div>
 
