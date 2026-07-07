@@ -216,13 +216,16 @@ def index():
 def add_week():
     data = load_data()
     week = request.json
-    week["gross_profit"] = round(float(week.get("meta_revenue", 0)) * GROSS_MARGIN, 2)
-    week["net_profit"] = round(week["gross_profit"] - float(week.get("ad_spend", 0)), 2)
     purchases = float(week.get("purchases", 1)) or 1
+    meta_revenue = float(week.get("meta_revenue", 0))
+    week["aov"] = round(meta_revenue / purchases, 2)
+    margin_pct = ((week["aov"] - COGS - SHIPPING_OUT - week["aov"] * TXN_FEE_PCT) / week["aov"]) if week["aov"] else 0
+    week["gross_margin_pct"] = round(margin_pct * 100, 1)
+    week["gross_profit"] = round(meta_revenue * margin_pct, 2)
+    week["net_profit"] = round(week["gross_profit"] - float(week.get("ad_spend", 0)), 2)
     week["net_profit_per_order"] = round(week["net_profit"] / purchases, 2)
-    week["roas"] = round(float(week.get("meta_revenue", 0)) / float(week.get("ad_spend", 1)), 2)
+    week["roas"] = round(meta_revenue / float(week.get("ad_spend", 1)), 2)
     week["cpp"] = round(float(week.get("ad_spend", 0)) / purchases, 2)
-    week["aov"] = round(float(week.get("meta_revenue", 0)) / purchases, 2)
     week["id"] = datetime.now().isoformat()
     data["weeks"].append(week)
     save_data(data)

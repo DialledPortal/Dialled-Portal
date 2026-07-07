@@ -57,7 +57,7 @@
   .red-line { flex: 1; height: 1px; background: #c8102e; margin-left: 16px; opacity: 0.3; }
 
   /* Summary cards */
-  .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+  .summary-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 32px; }
   .sum-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 20px; }
   .sum-card .label { font-size: 10px; letter-spacing: 1.5px; color: #555; text-transform: uppercase; margin-bottom: 8px; }
   .sum-card .value { font-size: 24px; font-weight: 700; }
@@ -117,7 +117,7 @@
   .pill.b { background: #4a1e2e; color: #f0879e; }
 
   @media (max-width: 900px) {
-    .summary-grid { grid-template-columns: repeat(2, 1fr); }
+    .summary-grid { grid-template-columns: repeat(3, 1fr); }
     .live-strip { grid-template-columns: repeat(2, 1fr); }
   }
 
@@ -215,10 +215,12 @@
   {% set total_revenue = weeks|sum(attribute='meta_revenue')|float %}
   {% set total_net = weeks|sum(attribute='net_profit')|float %}
   {% set total_purchases = weeks|sum(attribute='purchases')|float %}
+  {% set total_gross_profit = weeks|sum(attribute='gross_profit')|float %}
   {% set overall_roas = (total_revenue / total_spend) if total_spend > 0 else 0 %}
+  {% set overall_margin = (total_gross_profit / total_revenue * 100) if total_revenue > 0 else 0 %}
 
   <div class="section-head">
-    <h2>All-Time Totals</h2>
+    <h2>Ad Performance To Date</h2>
     <div class="red-line"></div>
   </div>
   <div class="summary-grid">
@@ -233,6 +235,10 @@
     <div class="sum-card">
       <div class="label">Overall ROAS</div>
       <div class="value {% if overall_roas >= settings.target_roas %}green{% elif overall_roas >= settings.breakeven_roas %}yellow{% else %}red{% endif %}">{{ "%.2f"|format(overall_roas) }}x</div>
+    </div>
+    <div class="sum-card">
+      <div class="label">Total Gross Profit</div>
+      <div class="value white">${{ "%.0f"|format(total_gross_profit) }} <span style="font-size:14px;color:#666">({{ "%.1f"|format(overall_margin) }}%)</span></div>
     </div>
     <div class="sum-card">
       <div class="label">Total Net Profit</div>
@@ -268,6 +274,7 @@
           <th>Purchases</th>
           <th>CPP</th>
           <th>AOV</th>
+          <th>Margin %</th>
           <th>Gross Profit</th>
           <th>Net Profit</th>
           <th>Net / Order</th>
@@ -288,6 +295,7 @@
           <td>{{ w.purchases }}</td>
           <td class="{% if w.cpp <= 40 %}good{% elif w.cpp <= 80 %}warn{% else %}bad{% endif %}">${{ "%.0f"|format(w.cpp) }}</td>
           <td>${{ "%.0f"|format(w.aov) }}</td>
+          <td>{{ w.gross_margin_pct|default('-') }}{% if w.gross_margin_pct is defined %}%{% endif %}</td>
           <td class="good">${{ "%.0f"|format(w.gross_profit) }}</td>
           <td class="{% if w.net_profit > 0 %}good{% else %}bad{% endif %}">${{ "%.0f"|format(w.net_profit) }}</td>
           <td class="{% if w.net_profit_per_order > 0 %}good{% else %}bad{% endif %}">${{ "%.0f"|format(w.net_profit_per_order) }}</td>
